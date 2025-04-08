@@ -1,0 +1,403 @@
+<div class="container">
+  <div class="profile-header mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h2 class="mb-0"><%= profileUser.fullName %> <small class="text-muted">@<%= profileUser.username %></small></h2>
+        <p class="mt-2 mb-0">
+          <span class="badge bg-secondary me-2">Age: <%= profileUser.age %></span>
+          <% if (profileUser.interests && profileUser.interests.length > 0) { %>
+            <% profileUser.interests.forEach(interest => { %>
+              <span class="badge bg-info me-1"><%= interest %></span>
+            <% }); %>
+          <% } %>
+        </p>
+        <div class="mt-2 fw-light">
+          <span class="me-3"><a href="#following" data-bs-toggle="tab" class="text-decoration-none"><strong><%= following.length %></strong> Following</a></span>
+          <span><a href="#followers" data-bs-toggle="tab" class="text-decoration-none"><strong><%= followers.length %></strong> Followers</a></span>
+          <% if (!isOwnProfile && followsYou) { %>
+            <span class="badge bg-secondary ms-2">Follows you</span>
+          <% } %>
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <% if (!isOwnProfile) { %>
+          <% if (isFollowing) { %>
+            <form action="/profile/<%= profileUser.username %>/unfollow" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-outline-primary">
+                <i class="fas fa-user-times"></i> Unfollow
+              </button>
+            </form>
+          <% } else { %>
+            <form action="/profile/<%= profileUser.username %>/follow" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Follow
+              </button>
+            </form>
+          <% } %>
+        <% } else { %>
+          <a href="/settings" class="btn btn-outline-secondary">
+            <i class="fas fa-cog"></i> Edit Profile
+          </a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Tabs navigation -->
+  <ul class="nav nav-tabs mb-3" id="profileTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="posts-tab" data-bs-toggle="tab" data-bs-target="#posts" type="button" role="tab" aria-controls="posts" aria-selected="true">
+        Posts
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="following-tab" data-bs-toggle="tab" data-bs-target="#following" type="button" role="tab" aria-controls="following" aria-selected="false">
+        Following <span class="badge bg-secondary"><%= following.length %></span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="followers-tab" data-bs-toggle="tab" data-bs-target="#followers" type="button" role="tab" aria-controls="followers" aria-selected="false">
+        Followers <span class="badge bg-secondary"><%= followers.length %></span>
+      </button>
+    </li>
+  </ul>
+
+
+  <!-- Tabs content -->
+  <div class="tab-content" id="profileTabsContent">
+    <!-- Posts tab -->
+    <div class="tab-pane fade show active" id="posts" role="tabpanel" aria-labelledby="posts-tab">
+      <div class="profile-posts">
+        <h3 class="mb-4">
+          <% if (isOwnProfile) { %>
+            Your Posts
+          <% } else { %>
+            <%= profileUser.fullName %>'s Posts
+          <% } %>
+        </h3>
+        
+        <% if (posts && posts.length > 0) { %>
+          <% posts.forEach(post => { %>
+            <div class="card mb-3 post-card">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong><%= profileUser.fullName %></strong>
+                    <span class="text-muted">@<%= profileUser.username %></span>
+                  </div>
+                  <small class="text-muted"><%= new Date(post.createdAt).toLocaleDateString() %></small>
+                </div>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title"><%= post.bookName %></h5>
+                <p class="card-text"><%= post.contentText %></p>
+                
+                <% if (post.originalPostId) { %>
+                  <div class="alert alert-secondary mt-2">
+                    <small class="text-muted">Reposted</small>
+                  </div>
+                <% } %>
+                
+                <div class="d-flex justify-content-between mt-3">
+                  <div class="post-actions">
+                    <button class="btn btn-sm btn-outline-primary like-btn" data-post-id="<%= post.postId %>">
+                      <i class="<%= post.likes.includes(currentUser.userId) ? 'fas' : 'far' %> fa-heart"></i> 
+                      <span class="likes-count"><%= post.likes.length %></span>
+                    </button>
+                    
+                    <button class="btn btn-sm btn-outline-success repost-btn" data-post-id="<%= post.postId %>">
+                      <i class="fas fa-retweet"></i> Repost
+                    </button>
+                  </div>
+                  
+                  <% if (isOwnProfile) { %>
+                    <button class="btn btn-sm btn-outline-danger delete-post-btn" data-post-id="<%= post.postId %>">
+                      <i class="far fa-trash-alt"></i>
+                    </button>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="alert alert-info">
+            <% if (isOwnProfile) { %>
+              <p class="mb-0">You haven't posted any book reviews yet. Start sharing your thoughts on books!</p>
+            <% } else { %>
+              <p class="mb-0"><%= profileUser.fullName %> hasn't posted any book reviews yet.</p>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    
+    <!-- Following tab -->
+    <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="following-tab">
+      <div class="following-list">
+        <h3 class="mb-4">
+          <% if (isOwnProfile) { %>
+            People You Follow
+          <% } else { %>
+            People <%= profileUser.fullName %> Follows
+          <% } %>
+        </h3>
+        
+        <% if (following && following.length > 0) { %>
+          <div class="list-group">
+            <% following.forEach(user => { %>
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <a href="/profile/<%= user.username %>" class="text-decoration-none">
+                    <strong><%= user.fullName %></strong>
+                    <span class="text-muted">@<%= user.username %></span>
+                  </a>
+                  <% if (!isOwnProfile && user.userId === currentUser.userId) { %>
+                    <span class="badge bg-secondary ms-1">You</span>
+                  <% } %>
+                </div>
+                
+                <!-- Don't show follow button for own profile or if viewing someone else's following list and the user is the current user -->
+                <% if (!isOwnProfile && user.userId !== currentUser.userId) { %>
+                  <% if (currentUser.following.includes(user.userId)) { %>
+                    <form action="/profile/<%= user.username %>/unfollow" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-primary">Unfollow</button>
+                    </form>
+                  <% } else { %>
+                    <form action="/profile/<%= user.username %>/follow" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-primary">Follow</button>
+                    </form>
+                  <% } %>
+                <% } else if (isOwnProfile && user.userId !== currentUser.userId) { %>
+                  <form action="/profile/<%= user.username %>/unfollow" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Unfollow</button>
+                  </form>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="alert alert-info">
+            <% if (isOwnProfile) { %>
+              <p class="mb-0">You aren't following anyone yet. Find people to follow!</p>
+            <% } else { %>
+              <p class="mb-0"><%= profileUser.fullName %> isn't following anyone yet.</p>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    
+    <!-- Followers tab -->
+    <div class="tab-pane fade" id="followers" role="tabpanel" aria-labelledby="followers-tab">
+      <div class="followers-list">
+        <h3 class="mb-4">
+          <% if (isOwnProfile) { %>
+            People Who Follow You
+          <% } else { %>
+            People Who Follow <%= profileUser.fullName %>
+          <% } %>
+        </h3>
+        
+        <% if (followers && followers.length > 0) { %>
+          <div class="list-group">
+            <% followers.forEach(user => { %>
+              <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <a href="/profile/<%= user.username %>" class="text-decoration-none">
+                    <strong><%= user.fullName %></strong>
+                    <span class="text-muted">@<%= user.username %></span>
+                  </a>
+                  <% if (!isOwnProfile && user.userId === currentUser.userId) { %>
+                    <span class="badge bg-secondary ms-1">You</span>
+                  <% } %>
+                  <% if (mutualFollows && mutualFollows[user.userId]) { %>
+                    <span class="badge bg-info ms-1">Mutual</span>
+                  <% } %>
+                </div>
+                
+                <% if (user.userId !== currentUser.userId) { %>
+                  <% if (currentUser.following.includes(user.userId)) { %>
+                    <form action="/profile/<%= user.username %>/unfollow" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-primary">Unfollow</button>
+                    </form>
+                  <% } else { %>
+                    <form action="/profile/<%= user.username %>/follow" method="POST" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-primary">Follow</button>
+                    </form>
+                  <% } %>
+                <% } %>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="alert alert-info">
+            <% if (isOwnProfile) { %>
+              <p class="mb-0">You don't have any followers yet. Share your reviews to attract followers!</p>
+            <% } else { %>
+              <p class="mb-0"><%= profileUser.fullName %> doesn't have any followers yet.</p>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Socket.IO client-side functionality -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Socket.IO connection
+      const socket = io();
+      
+      // Like button functionality
+      document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const postId = this.dataset.postId;
+          
+          fetch(`/feed/like/${postId}`, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              // Update the like button
+              const heartIcon = this.querySelector('i');
+              const likesCount = this.querySelector('.likes-count');
+              
+              if (data.liked) {
+                heartIcon.classList.remove('far');
+                heartIcon.classList.add('fas');
+              } else {
+                heartIcon.classList.remove('fas');
+                heartIcon.classList.add('far');
+              }
+              
+              likesCount.textContent = data.likesCount;
+              
+              // Emit socket event
+              socket.emit('like-post', {
+                postId,
+                liked: data.liked,
+                likesCount: data.likesCount
+              });
+            }
+          })
+          .catch(err => {
+            console.error('Error liking post:', err);
+          });
+        });
+      });
+      
+      // Repost button functionality
+      document.querySelectorAll('.repost-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const postId = this.dataset.postId;
+          
+          fetch(`/feed/repost/${postId}`, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              // Emit socket event
+              socket.emit('repost', data.post);
+              
+              // Show success message
+              alert('Post has been reposted to your feed!');
+            }
+          })
+          .catch(err => {
+            console.error('Error reposting:', err);
+          });
+        });
+      });
+      
+      // Delete button functionality
+      document.querySelectorAll('.delete-post-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          if (confirm('Are you sure you want to delete this post?')) {
+            const postId = this.dataset.postId;
+            const postCard = this.closest('.post-card');
+            
+            fetch(`/feed/post/${postId}`, {
+              method: 'DELETE',
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                // Remove the post from the DOM
+                postCard.remove();
+              }
+            })
+            .catch(err => {
+              console.error('Error deleting post:', err);
+            });
+          }
+        });
+      });
+      
+      // Add AJAX functionality for follow/unfollow buttons in user lists
+      document.querySelectorAll('#following .list-group-item form, #followers .list-group-item form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          const isFollowAction = this.action.includes('/follow') && !this.action.includes('/unfollow');
+          const button = this.querySelector('button');
+          const originalButtonText = button.innerHTML;
+          
+          // Set loading state
+          button.disabled = true;
+          button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+          
+          fetch(this.action, {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              // Update button appearance
+              if (isFollowAction) {
+                button.classList.remove('btn-primary');
+                button.classList.add('btn-outline-primary');
+                button.innerHTML = 'Unfollow';
+                // Change form action to unfollow
+                this.action = this.action.replace('/follow', '/unfollow');
+              } else {
+                button.classList.remove('btn-outline-primary');
+                button.classList.add('btn-primary');
+                button.innerHTML = 'Follow';
+                // Change form action to follow
+                this.action = this.action.replace('/unfollow', '/follow');
+              }
+            } else {
+              // Restore original button text
+              button.innerHTML = originalButtonText;
+              alert('Failed to update follow status');
+            }
+          })
+          .catch(err => {
+            console.error('Error updating follow status:', err);
+            button.innerHTML = originalButtonText;
+            alert('Failed to update follow status');
+          })
+          .finally(() => {
+            button.disabled = false;
+          });
+        });
+      });
+    });
+  </script>
+</div>

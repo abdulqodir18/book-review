@@ -1,0 +1,89 @@
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Register</h4>
+      </div>
+      <div class="card-body">
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="alert alert-danger">
+            <%= error %>
+          </div>
+        <% } %>
+        <form action="/auth/register" method="POST">
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username" value="<%= typeof values !== 'undefined' && values.username ? values.username : '' %>" required>
+            <small class="form-text text-muted">Must be between 3 and 30 characters</small>
+          </div>
+          <div class="mb-3">
+            <label for="fullName" class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="fullName" name="fullName" value="<%= typeof values !== 'undefined' && values.fullName ? values.fullName : '' %>" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+            <small class="form-text text-muted">Must be at least 6 characters</small>
+          </div>
+          <div class="mb-3">
+            <label for="age" class="form-label">Age</label>
+            <input type="number" class="form-control" id="age" name="age" value="<%= typeof values !== 'undefined' && values.age ? values.age : '' %>" min="13" max="120" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Interests</label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="interests[]" value="Fiction" id="interest-fiction">
+              <label class="form-check-label" for="interest-fiction">Fiction</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="interests[]" value="Non-Fiction" id="interest-non-fiction">
+              <label class="form-check-label" for="interest-non-fiction">Non-Fiction</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="interests[]" value="Sci-Fi" id="interest-sci-fi">
+              <label class="form-check-label" for="interest-sci-fi">Science Fiction</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="interests[]" value="Fantasy" id="interest-fantasy">
+              <label class="form-check-label" for="interest-fantasy">Fantasy</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="interests[]" value="Mystery" id="interest-mystery">
+              <label class="form-check-label" for="interest-mystery">Mystery</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="interests[]" value="Romance" id="interest-romance">
+              <label class="form-check-label" for="interest-romance">Romance</label>
+            </div>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Register</button>
+          </div>
+        </form>
+      </div>
+      <div class="card-footer text-center">
+        <p class="mb-0">Already have an account? <a href="/auth/login">Login here</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Handle interests pre-selection from previous form submission
+  document.addEventListener('DOMContentLoaded', function() {
+    <% if (typeof values !== 'undefined' && values.interests) { %>
+      try {
+        // Use a safer approach to pass data from EJS to JavaScript
+        const interests = JSON.parse('<%- JSON.stringify(values.interests || []) %>'.replace(/&quot;/g, '"'));
+        if (Array.isArray(interests)) {
+          interests.forEach(interest => {
+            const checkbox = document.querySelector(`input[name="interests[]"][value="${interest}"]`);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+      } catch (error) {
+        console.error('Error processing interests:', error);
+      }
+    <% } %>
+  });
+</script>

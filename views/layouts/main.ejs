@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'XReader - Book Review Social Platform' %></title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/styles/style.css">
+</head>
+<body class="d-flex flex-column h-100">
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container">
+      <a class="navbar-brand" href="/feed">XReader</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <% if (locals.isAuthenticated) { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/profile/<%= locals.currentUser.username %>"><i class="fas fa-user"></i> Profile</a>
+            </li>
+          <% } else { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/login"><i class="fas fa-sign-in-alt"></i> Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/register"><i class="fas fa-user-plus"></i> Register </a>
+            </li>
+          <% } %>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Disclaimer Modal -->
+  <div class="modal fade" id="disclaimerModal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="disclaimerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="disclaimerModalLabel">Disclaimer</h5>
+        </div>
+        <div class="modal-body">
+          <p>This web application was created to fulfill Web Technology module's requirements (4BUIS011C) and does not represent an actual company or service.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="acceptDisclaimer">I understand</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container flex-shrink-0 mb-4">
+    <%- body %>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer mt-auto py-3 bg-light">
+    <div class="container text-center">
+      <span class="text-muted">&copy; <%= new Date().getFullYear() %> XReader - Book Review Social Platform</span>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  
+  <!-- Disclaimer Modal Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if the disclaimer has been shown before
+      if (!localStorage.getItem('disclaimerShown')) {
+        // Show the modal if it hasn't been shown
+        var disclaimerModal = new bootstrap.Modal(document.getElementById('disclaimerModal'));
+        disclaimerModal.show();
+        
+        // Set the flag when user acknowledges the disclaimer
+        document.getElementById('acceptDisclaimer').addEventListener('click', function() {
+          localStorage.setItem('disclaimerShown', 'true');
+          disclaimerModal.hide();
+        });
+      }
+    });
+  </script>
+  
+  <!-- Custom JS -->
+  <script src="/js/main.js"></script>
+  <!-- Page-specific script -->
+  <script src="/js/feed.js"></script>
+
+  <%- typeof script !== 'undefined' ? script : '' %>
+</body>
+</html>

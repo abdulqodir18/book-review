@@ -1,0 +1,159 @@
+<div class="row">
+  <!-- Left column: Create new post -->
+  <div class="col-lg-4 mb-4">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Create a new post</h5>
+      </div>
+      <div class="card-body">
+        <form id="new-post-form" action="/feed/post" method="POST">
+          <div class="mb-3">
+            <label for="bookName" class="form-label">Book Name</label>
+            <input type="text" class="form-control" id="bookName" name="bookName" required>
+          </div>
+          <div class="mb-3">
+            <label for="contentText" class="form-label">Your Review</label>
+            <textarea class="form-control" id="contentText" name="contentText" rows="5" required></textarea>
+            <div class="d-flex justify-content-between mt-1">
+              <small class="form-text text-muted">Minimum 60 characters</small>
+              <span id="charCount" class="text-danger">0/60 characters</span>
+            </div>
+            <div class="progress mt-2" style="height: 5px;">
+              <div id="charProgress" class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="60"></div>
+            </div>
+          </div>
+          <div id="post-form-feedback" class="alert alert-danger d-none mb-3"></div>
+          <div class="d-grid gap-2">
+            <button type="submit" id="post-button" class="btn btn-primary" disabled>
+              <span id="post-button-text">Post</span>
+              <span id="post-button-spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column: Feed -->
+  <div class="col-lg-8">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="m-0">
+        <% if (activeFilter === 'following') { %>
+          Following Feed <small class="text-muted fs-6">- Posts from users you follow</small>
+        <% } else { %>
+          Live Feed <small class="text-muted fs-6">- Posts from all users</small>
+        <% } %>
+      </h3>
+      
+      <!-- Feed filter toggle -->
+      <div class="btn-group" role="group" aria-label="Feed filter options">
+        <a href="/feed?filter=all" class="btn <%= activeFilter === 'all' || !activeFilter ? 'btn-primary' : 'btn-outline-primary' %>">
+          <i class="fas fa-globe"></i> All Posts
+        </a>
+        <a href="/feed?filter=following" class="btn <%= activeFilter === 'following' ? 'btn-primary' : 'btn-outline-primary' %>">
+          <i class="fas fa-user-friends"></i> Following
+        </a>
+      </div>
+    </div>
+    
+    <!-- Posts container -->
+    <div id="posts-container">
+      <% if (posts && posts.length > 0) { %>
+        <% posts.forEach(post => { %>
+          <div class="card mb-3 post-card" data-post-id="<%= post.postId %>" data-current-user="<%= currentUser.userId %>" <%= post.originalPostId ? `data-original-post-id="${post.originalPostId}"` : '' %>>
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <a href="/profile/<%= userMap[post.userId].username %>" class="text-decoration-none">
+                    <strong><%= userMap[post.userId].fullName %></strong>
+                    <span class="text-muted">@<%= userMap[post.userId].username %></span>
+                  </a>
+                </div>
+                <small class="text-muted"><%= new Date(post.createdAt).toLocaleDateString() %></small>
+              </div>
+              <% if (post.originalPostId && originalPostMap[post.originalPostId]) { %>
+                <div class="mt-1 small">
+                  <i class="fas fa-retweet text-success"></i>
+                  <span class="text-muted">Reposted from <a href="/profile/<%= userMap[originalPostMap[post.originalPostId].userId].username %>">@<%= userMap[originalPostMap[post.originalPostId].userId].username %></a></span>
+                </div>
+              <% } %>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title"><%= post.bookName %></h5>
+              <p class="card-text"><%= post.contentText %></p>
+              
+              <div class="d-flex justify-content-between mt-3">
+                <div class="post-actions">
+                  <button class="btn btn-sm btn-outline-primary like-btn" data-post-id="<%= post.originalPostId || post.postId %>">
+                    <i class="<%= (post.originalPostId ? originalPostMap[post.originalPostId]?.likes : post.likes).includes(currentUser.userId) ? 'fas' : 'far' %> fa-heart"></i> 
+                    <span class="likes-count"><%= post.originalPostId ? originalPostMap[post.originalPostId]?.likes.length || 0 : post.likes.length %></span>
+                  </button>
+                  
+                  <button class="btn btn-sm <%= (post.originalPostId ? originalPostMap[post.originalPostId]?.reposts : post.reposts).includes(currentUser.userId) ? 'btn-success' : 'btn-outline-success' %> repost-btn" data-post-id="<%= post.originalPostId || post.postId %>">
+                    <i class="fas fa-retweet"></i> 
+                    <%= (post.originalPostId ? originalPostMap[post.originalPostId]?.reposts : post.reposts).includes(currentUser.userId) ? 'Undo repost' : 'Repost' %>
+                    <span class="reposts-count"><%= post.originalPostId ? originalPostMap[post.originalPostId]?.reposts.length || 0 : post.reposts.length %></span>
+                  </button>
+                </div>
+                
+                <% if (post.userId === currentUser.userId) { %>
+                  <button class="btn btn-sm btn-outline-danger delete-post-btn" data-post-id="<%= post.postId %>">
+                    <i class="far fa-trash-alt"></i>
+                  </button>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="alert alert-info">
+          <p class="mb-0">Your feed is empty! Start by following other users or creating your first post.</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Post template for JS insertion -->
+<template id="post-template">
+  <div class="card mb-3 post-card">
+    <div class="card-header">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <a href="" class="text-decoration-none post-author-link">
+            <strong class="post-author-name"></strong>
+            <span class="text-muted post-author-username"></span>
+          </a>
+        </div>
+        <small class="text-muted post-date"></small>
+      </div>
+      <div class="mt-1 small repost-indicator d-none">
+        <i class="fas fa-retweet text-success"></i>
+        <span class="text-muted">Reposted from <a href="#" class="original-author-link">@<span class="original-username"></span></a></span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h5 class="card-title post-book-name"></h5>
+      <p class="card-text post-content"></p>
+      
+      <div class="d-flex justify-content-between mt-3">
+        <div class="post-actions">
+          <button class="btn btn-sm btn-outline-primary like-btn">
+            <i class="far fa-heart"></i> 
+            <span class="likes-count">0</span>
+          </button>
+          
+          <button class="btn btn-sm btn-outline-success repost-btn">
+            <i class="fas fa-retweet"></i> 
+            <span class="repost-btn-text">Repost</span>
+            <span class="reposts-count">0</span>
+          </button>
+        </div>
+        
+        <button class="btn btn-sm btn-outline-danger delete-post-btn d-none">
+          <i class="far fa-trash-alt"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
